@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1759677531790,
+      "tag": "0000_lumpy_synch",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1759678715481,
+      "tag": "0001_wandering_kat_farrell",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1760802148996,
+      "tag": "0002_elite_tigra",
+      "breakpoints": true
+    }
+  ]
+}
