@@ -17,57 +17,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import { Eye, EyeOff, Lock, Mail, User, UserCheck } from "lucide-react";
 import Link from "next/link";
+
+
 import { registrationAction } from "./registrationAction.action";
+import { useForm } from "react-hook-form"
 
-import { toast } from "sonner";
 
-import React, { ChangeEvent, FormEvent, useState } from "react";
+import React, { useState } from "react";
+import { RegisterUserWithConfirmData, registerUserWithConfirmSchema } from "@/features/auth/auth.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-interface RegistrationFormData {
-  name: string;
-  userName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  role: "applicant" | "employer";
-}
+
+
 
 const Registaion: React.FC = () => {
-  const [formdata, setFormdata] = useState<RegistrationFormData>({
-    name: "",
-    userName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "applicant",
-  });
+
+  const {
+    register,
+    handleSubmit,
+    // watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(registerUserWithConfirmSchema)
+  })
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleInputChange = (name: string, value: string) => {
-    setFormdata((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: RegisterUserWithConfirmData) => {
 
-    const registrationData = {
-      name: formdata.name.trim(),
-      userName: formdata.userName.trim(),
-      email: formdata.email.trim(),
-      password: formdata.password,
-      role: formdata.role,
-    };
 
-    if (formdata.password !== formdata.confirmPassword)
-      return toast.error("Password should be same");
-
-    const result = await registrationAction(registrationData);
+    const result = await registrationAction(data);
 
     if (result.status === "SUCCESS") {
       toast.success(result.message);
@@ -90,7 +74,7 @@ const Registaion: React.FC = () => {
 
         <CardContent>
           <form
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmit)}
             // action={registrationAction}
             className="space-y-6"
           >
@@ -101,17 +85,19 @@ const Registaion: React.FC = () => {
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="name"
-                  name="name"
                   type="text"
                   placeholder="Enter your full name"
                   required
-                  value={formdata.name}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("name", e.target.value)
-                  }
-                  className={`pl-10 `}
+                  {...register("name")}
+                  className={`pl-10 ${
+                    errors.name ? "border-destructive" : ""}`}
                 />
               </div>
+              {errors.name && (
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
+              )}
             </div>
 
             {/* Username Field */}
@@ -121,17 +107,19 @@ const Registaion: React.FC = () => {
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="userName"
-                  name="userName"
                   type="text"
                   placeholder="Choose a username"
                   required
-                  value={formdata.userName}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("userName", e.target.value)
-                  }
-                  className={`pl-10 `}
+                  {...register("userName")}
+                  className={`pl-10 ${
+                    errors.userName ? "border-destructive" : ""}`}
                 />
               </div>
+              {errors.userName && (
+                <p className="text-sm text-destructive">
+                  {errors.userName.message}
+                </p>
+              )}
             </div>
 
             {/* Email Field */}
@@ -141,28 +129,26 @@ const Registaion: React.FC = () => {
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="email"
-                  name="email"
                   type="email"
                   placeholder="Enter your email"
                   required
-                  value={formdata.email}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("email", e.target.value)
-                  }
-                  className={`pl-10 `}
+                  {...register("email")}
+                  className={`pl-10 ${
+                    errors.email ? "border-destructive" : ""}`}
                 />
               </div>
+              {errors.email && (
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             {/* Role Selection */}
             <div className="space-y-2 w-full">
               <Label htmlFor="role">I am a *</Label>
               <Select
-                name="role"
-                value={formdata.role}
-                onValueChange={(value: "applicant" | "employer") =>
-                  handleInputChange("role", value)
-                }
+                {...register("role")}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select your role" />
@@ -181,15 +167,12 @@ const Registaion: React.FC = () => {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
                   required
-                  value={formdata.password}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("password", e.target.value)
-                  }
-                  className={`pl-10 pr-10 `}
+                  {...register("password")}
+                  className={`pl-10 pr-10${
+                    errors.password ? "border-destructive" : ""}`}
                 />
 
                 <Button
@@ -206,6 +189,11 @@ const Registaion: React.FC = () => {
                   )}
                 </Button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             {/* Confirm Password Field */}
@@ -215,15 +203,12 @@ const Registaion: React.FC = () => {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
-                  name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your password"
                   required
-                  value={formdata.confirmPassword}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("confirmPassword", e.target.value)
-                  }
-                  className={`pl-10 pr-10 `}
+                  {...register("confirmPassword")}
+                  className={`pl-10 pr-10${
+                    errors.confirmPassword ? "border-destructive" : ""}`}
                 />
                 <Button
                   type="button"
@@ -239,6 +224,11 @@ const Registaion: React.FC = () => {
                   )}
                 </Button>
               </div>
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}
