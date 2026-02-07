@@ -4,54 +4,45 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { loginUserAction } from '@/features/auth/server/auth.action';
-import { Eye, EyeOff, Lock, Mail, User, UserCheck } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 
 
-import React, { ChangeEvent, FormEvent, useState } from 'react'
+import React, { useState } from 'react'
 import { toast } from 'sonner';
 
-interface LoginFormData{
-    email: string;
-    password: string;
-}
+import {useForm} from "react-hook-form"
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import { loginUserAction } from '@/features/auth/server/auth.action';
+import { LoginUserData, loginUserSchema } from '@/features/auth/auth.schema';
+
 
 
 const LoginForm: React.FC = () => {
 
-    const [formdata, setFormdata] = useState<LoginFormData>({
-        email: "",
-        password: "",
+    const {
+      register, 
+      handleSubmit,
+      formState: {errors}
+    } = useForm({
+      resolver: zodResolver(loginUserSchema)
     })
+
     const [showPassword, setShowPassword] = useState(false)
 
-    const handleInputChange = (name: string, value: string)=>{
-        setFormdata((prev)=>({
-            ...prev,
-            [name]: value
-        }))
-    }
 
-    const handleSubmit = async(e: FormEvent)=>{
-        e.preventDefault();
-        // console.log(formdata);
-
+    const onSubmit = async(data: LoginUserData)=>{
 
         try {
-          const LoginData = {
-            email: formdata.email.trim(),
-            password: formdata.password,
-          };
-
-          const result = await loginUserAction(LoginData)
+          const result = await loginUserAction(data);
           if(result.status === "SUCCESS"){
             toast.success(result.message)
           } else{
             toast.error(result.message)
           }
         } catch (error) {
-          
+          console.error(error)
         }
     }
 
@@ -64,13 +55,13 @@ const LoginForm: React.FC = () => {
           <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
             <UserCheck className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl">Join Our Job Portal</CardTitle>
-          <CardDescription>Create your account to get started</CardDescription>
+          <CardTitle className="text-2xl">Welcome back to Job Portal</CardTitle>
+          <CardDescription>Login to get started</CardDescription>
         </CardHeader>
 
         <CardContent>
           <form 
-            onSubmit={handleSubmit} 
+            onSubmit={handleSubmit(onSubmit)} 
             className="space-y-6"
           >
 
@@ -84,11 +75,13 @@ const LoginForm: React.FC = () => {
                   type="email"
                   placeholder="Enter your email"
                   required
-                  value={formdata.email}
-                  onChange={(e: ChangeEvent<HTMLInputElement>)=> handleInputChange("email", e.target.value)}
-                  className={`pl-10 `}
+                  {...register("email")}
+                  className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
                 />
               </div>
+              {errors.email && (
+                <p className='text-sm text-destructive'>{errors.email.message}</p>
+              )}
             </div>
 
 
@@ -102,16 +95,16 @@ const LoginForm: React.FC = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   required
-                  value={formdata.password}
-                  onChange={(e: ChangeEvent<HTMLInputElement>)=> handleInputChange("password", e.target.value)}
-                  className={`pl-10 pr-10 `}
+                  {...register("password")}
+                  className={`pl-10 pr-10 ${
+                    errors.password ? "border-destructive" : ""}`}
                 />
 
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent cursor-pointer"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -121,18 +114,21 @@ const LoginForm: React.FC = () => {
                   )}
                 </Button>
               </div>
+              {errors.password && (
+                <p className='text-sm text-destructive'>{errors.password.message}</p>
+              )}
             </div>
 
             
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full cursor-pointer">
               Sign In
             </Button>
 
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link
                   href="/register"
                   className="text-primary hover:text-primary/80 font-medium underline-offset-4 hover:underline"
