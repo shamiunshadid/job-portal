@@ -23,7 +23,7 @@ import Link from "next/link";
 
 
 import { registrationAction } from "./registrationAction.action";
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 
 
 import React, { useState } from "react";
@@ -38,7 +38,7 @@ const Registaion: React.FC = () => {
   const {
     register,
     handleSubmit,
-    // watch,
+    control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registerUserWithConfirmSchema)
@@ -147,17 +147,20 @@ const Registaion: React.FC = () => {
             {/* Role Selection */}
             <div className="space-y-2 w-full">
               <Label htmlFor="role">I am a *</Label>
-              <Select
-                {...register("role")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="applicant">Job Applicant</SelectItem>
-                  <SelectItem value="employer">Employer</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller name="role" control={control} 
+                render={({field})=> (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="applicant">Job Applicant</SelectItem>
+                      <SelectItem value="employer">Employer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )
+              }>
+              </Controller>
             </div>
 
             {/* Password Field */}
