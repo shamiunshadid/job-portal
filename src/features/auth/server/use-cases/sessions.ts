@@ -2,8 +2,9 @@ import { cookies, headers } from "next/headers";
 import crypto from "crypto";
 import { getIpAdress } from "./location";
 import { db } from "@/config/db";
-import { sessions } from "@/drizzle/schema";
+import { sessions, users } from "@/drizzle/schema";
 import { SESSION_LIFETIME } from "@/config/constants";
+import { eq } from "drizzle-orm";
 
 
 type CreateSessionData = {
@@ -54,3 +55,31 @@ export const createSessionAndSetCookies = async (userId: number) => {
   })
 
 };
+
+
+export const validateSessionAndGetUser = async(session: string)=>{
+  const hashedToken = crypto.createHash("sha-256").update(session).digest("hex");
+
+  const [user] = await db.select({
+    id: users.id,
+    session: {
+      id: sessions.id,
+      expiresAt: sessions.expiresAt,
+      userAgent: sessions.userAgent,
+      ip: sessions.ip,
+    },
+
+    name: users.name,
+    userName: users.userName,
+    role: users.role,
+    phoneNumber: users.phoneNumber,
+    email: users.email,
+    createdAt: users.createdAt,
+    updatedAt: users.updatedAt
+  })
+  .from(sessions)
+  .where(eq(sessions.id, hashedToken))
+  .innerJoin(users, eq(users.id, sessions.userId))
+
+  return user;
+}
