@@ -29,6 +29,7 @@ import { Controller, useForm } from "react-hook-form"
 import React, { useState } from "react";
 import { RegisterUserWithConfirmData, registerUserWithConfirmSchema } from "@/features/auth/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
 
 
@@ -48,10 +49,22 @@ const Registaion: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 
+  const router = useRouter();
+
   const onSubmit = async (data: RegisterUserWithConfirmData) => {
 
 
     const result = await registrationAction(data);
+
+
+    if(result.status === "SUCCESS"){
+      if(data.role === "employer"){
+        router.push("/employer-dashboard")
+      }
+      else{
+        router.push("/dashboard")
+      }
+    }
 
     if (result.status === "SUCCESS") {
       toast.success(result.message);
