@@ -5,24 +5,28 @@ import { db } from "@/config/db";
 import { sessions, users } from "@/drizzle/schema";
 import { SESSION_LIFETIME, SESSION_REFRESH_TIME } from "@/config/constants";
 import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
 
 type CreateSessionData = {
     token: string,
     userId: number,
     userAgent: string,
-    ip: string
+    ip: string,
+    tx?: DbClient,
 }
 
+
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 const generateSessionToken = () => {
   return crypto.randomBytes(32).toString("hex").normalize();
 };
 
-const createUserSession = async({token, userId, userAgent, ip}: CreateSessionData)=>{
+const createUserSession = async({token, userId, userAgent, ip, tx = db}: CreateSessionData)=>{
     const hashedToken = crypto.createHash("sha-256").update(token).digest("hex");
 
-    const [session] = await db.insert(sessions).values({
+    const [session] = await tx.insert(sessions).values({
         id: hashedToken,
         userId,
         expiresAt: new Date(Date.now() + SESSION_LIFETIME * 1000),
@@ -33,7 +37,7 @@ const createUserSession = async({token, userId, userAgent, ip}: CreateSessionDat
     return session;
 }
 
-export const createSessionAndSetCookies = async (userId: number) => {
+export const createSessionAndSetCookies = async (userId: number, tx: DbClient = db) => {
   const token = generateSessionToken();
   const ip = await getIpAdress();
   const headerList = await headers();
@@ -42,7 +46,8 @@ export const createSessionAndSetCookies = async (userId: number) => {
     token,
     userId: userId,
     userAgent: headerList.get("user-agent") || "",
-    ip: ip
+    ip: ip,
+    tx,
   })
 
 
@@ -101,6 +106,6 @@ export const validateSessionAndGetUser = async(session: string)=>{
   return user;
 }
 
-const invalidateSession = async(id: string)=>{
+export const invalidateSession = async(id: string)=>{
   await db.delete(sessions).where(eq(sessions.id, id))
 }
