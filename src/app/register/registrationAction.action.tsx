@@ -5,13 +5,16 @@ import { users } from "@/drizzle/schema";
 import argon2 from "argon2";
 import { eq, or } from "drizzle-orm";
 
-export const registrationAction = async (data: {
+
+export interface Data {
   name: string;
   userName: string;
   email: string;
   password: string;
   role: "applicant" | "employer";
-}) => {
+}
+
+export const registrationAction = async (data: Data) => {
   try {
     const { name, userName, email, password, role } = data;
 
@@ -49,6 +52,7 @@ export const registrationAction = async (data: {
       message: "Registration Completed Successfully",
     };
   } catch (error) {
+    console.error(error);
     return {
       status: "ERROR",
       message: "Unknown Error Occurred! Please Try Again Later",
